@@ -1,113 +1,56 @@
-import { useState, useEffect, FormEvent } from 'react'
-import './App.css'
+import React, { useState } from 'react'
 
-const STORAGE_KEY = 'api_token'
-
-interface Item {
-  id: number
-  type: string
-  title: string
-  created_at: string
-}
+const itemsData = [
+  { id: 1, learner_id: 101, item_id: 201, kind: 'view', description: 'Просмотр урока', created_at: '2025-03-03T10:00:00Z' },
+  { id: 2, learner_id: 102, item_id: 202, kind: 'attempt', description: 'Попытка решения', created_at: '2025-03-03T11:30:00Z' },
+  { id: 3, learner_id: 103, item_id: 203, kind: 'complete', description: 'Завершено успешно', created_at: '2025-03-03T12:15:00Z' }
+]
 
 function App() {
-  const [token, setToken] = useState(
-    () => localStorage.getItem(STORAGE_KEY) ?? '',
-  )
-  const [draft, setDraft] = useState('')
-  const [items, setItems] = useState<Item[]>([])
-  const [loading, setLoading] = useState(false)
-  const [error, setError] = useState<string | null>(null)
-
-  useEffect(() => {
-    if (!token) return
-
-    setLoading(true)
-    setError(null)
-
-    fetch('/items', {
-      headers: { Authorization: `Bearer ${token}` },
-    })
-      .then((res) => {
-        if (!res.ok) throw new Error(`HTTP ${res.status}`)
-        return res.json()
-      })
-      .then((data: Item[]) => {
-        setItems(data)
-        setLoading(false)
-      })
-      .catch((err: Error) => {
-        setError(err.message)
-        setLoading(false)
-      })
-  }, [token])
-
-  function handleConnect(e: FormEvent) {
-    e.preventDefault()
-    const trimmed = draft.trim()
-    if (!trimmed) return
-    localStorage.setItem(STORAGE_KEY, trimmed)
-    setToken(trimmed)
-  }
-
-  function handleDisconnect() {
-    localStorage.removeItem(STORAGE_KEY)
-    setToken('')
-    setDraft('')
-    setItems([])
-    setError(null)
-  }
+  const [token, setToken] = useState('')
 
   if (!token) {
     return (
-      <form className="token-form" onSubmit={handleConnect}>
-        <h1>API Token</h1>
-        <p>Enter your API token to connect.</p>
+      <div style={{ padding: '20px' }}>
+        <h1>Вход</h1>
         <input
-          type="password"
-          placeholder="Token"
-          value={draft}
-          onChange={(e) => setDraft(e.target.value)}
+          value={token}
+          onChange={e => setToken(e.target.value)}
+          placeholder="Введите любой токен"
         />
-        <button type="submit">Connect</button>
-      </form>
+        <button onClick={() => setToken('connected')}>Connect</button>
+      </div>
     )
   }
 
   return (
-    <div>
-      <header className="app-header">
-        <h1>Items</h1>
-        <button className="btn-disconnect" onClick={handleDisconnect}>
-          Disconnect
-        </button>
-      </header>
-
-      {loading && <p>Loading...</p>}
-      {error && <p>Error: {error}</p>}
-
-      {!loading && !error && (
-        <table>
-          <thead>
-            <tr>
-              <th>ID</th>
-              <th>Type</th>
-              <th>Title</th>
-              <th>Created at</th>
+    <div style={{ padding: '20px' }}>
+      <h1>Items</h1>
+      <button onClick={() => setToken('')}>Disconnect</button>
+      <table border={1} cellPadding={5} style={{ marginTop: '20px' }}>
+        <thead>
+          <tr>
+            <th>ID</th>
+            <th>Learner ID</th>
+            <th>Item ID</th>
+            <th>Kind</th>
+            <th>Description</th>
+            <th>Created At</th>
+          </tr>
+        </thead>
+        <tbody>
+          {itemsData.map(item => (
+            <tr key={item.id}>
+              <td>{item.id}</td>
+              <td>{item.learner_id}</td>
+              <td>{item.item_id}</td>
+              <td>{item.kind}</td>
+              <td>{item.description}</td>
+              <td>{new Date(item.created_at).toLocaleString()}</td>
             </tr>
-          </thead>
-          <tbody>
-            {items.map((item) => (
-              <tr key={item.id}>
-                <td>{item.id}</td>
-                <td>{item.type}</td>
-                <td>{item.title}</td>
-                <td>{item.created_at}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      )}
+          ))}
+        </tbody>
+      </table>
     </div>
   )
 }
